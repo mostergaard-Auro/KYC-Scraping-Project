@@ -1,0 +1,26 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /
+  script: home.app
+
+- url: /index\.html
+  script: home.app
+
+- url: /stylesheets
+  static_dir: stylesheets
+
+- url: /(.*\.(gif|png|jpg))$
+  static_files: static/\1
+  upload: static/.*\.(gif|png|jpg)$
+
+- url: /admin/.*
+  script: admin.app
+
+env_variables:
+    CLOUDSQL_CONNECTION_NAME: kyc-scraping:us-central1:kyc-scraping-db
+    CLOUDSQL_USER: maddie
+    CLOUDSQL_PASSWORD: exostfp
+# [END env_variables]
