@@ -1,4 +1,4 @@
-import selenium
+# import selenium
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
@@ -55,20 +55,20 @@ def scrape(id):
 	html = driver.page_source
 	driver.quit()
 	soup = BeautifulSoup(html, "html.parser")
-	print ("Name:")
-	print (name(soup))
-	print ("Regulator:")
-	print (regulator(soup))
-	print ("Address:")
-	print (address(soup))
-	# data = {}
-	# data["Legal Name"] = name(soup)
-	# data["Approval Status"] = regulator(soup)
-	# data["Legal Address"] = address(soup)
-	# return data
+	# print ("Name:")
+	# print (name(soup))
+	# print ("Regulator:")
+	# print (regulator(soup))
+	# print ("Address:")
+	# print (address(soup))
+	data = {}
+	data["Legal Name"] = name(soup)
+	data["Approval Status"] = regulator(soup)
+	data["Legal Address"] = address(soup)
+	return data
 
 
-print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v")
-scrape("02263951")
-print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^")
+# print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v")
+# scrape("02263951")
+# print ("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^")
 

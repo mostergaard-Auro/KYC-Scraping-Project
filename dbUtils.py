@@ -1,4 +1,4 @@
-import sqlite3, EDGAR, FDIC, FINRA, GMEI, NIC, SEC
+import sqlite3, EDGAR, FDIC, FINRA, GMEI, NIC, SEC, FCA, Beta
 import json, selenium
 from time import gmtime, strftime	
 from datetime import date, timedelta
@@ -75,7 +75,7 @@ def scrapeAll():
 	results = c.fetchall()
 	ctr = 0
 	for record in results:
-		if record[-1]:
+		if record[8]: # active?
 			log.append(scrapeClient(record, db, c))
 	logAll(log)
 	db.commit()	
@@ -121,6 +121,12 @@ def scrapeClient(client, db, c):
 	if client[7] is not None:
 		# print "calling SEC"
 		data["SEC"] = SEC.scrape(client[7])
+	if client[9] is not None:
+		# print "calling SEC"
+		data["FCA"] = FCA.scrape(client[8])
+	if client[10] is not None:
+		# print "calling SEC"
+		data["Beta"] = Beta.scrape(client[9])
 	d = json.dumps(data)
 	timestamp = strftime("%Y-%m-%d %H:%M:%S", gmtime())
 	log = (client[0], timestamp, str(d))
@@ -226,21 +232,15 @@ def changes():
 		record = logs[0]
 		if recordY[0] != record[0]:
 				if recordY[3] != record[3]: 
-					# print "No Changes"
-					# print ""
-					# print "~~~~~~~~~~"
-				# else:
 					nameFinder = json.loads(recordY[3])
 					name = ""
-					listOfRegs = ['EDGAR', 'FDIC', 'FINRA', 'GMEI', 'NIC', 'SEC']
+					listOfRegs = ['EDGAR', 'FDIC', 'FINRA', 'GMEI', 'NIC', 'SEC', 'FCA', 'Beta']
 					for regulator in listOfRegs:
 						try: 
 							name =  nameFinder[regulator]['Legal Name'] 
 						except KeyError:
 							pass
 					log.append(searchForProblem(record, recordY, name))
-						# print ""
-						# print "~~~~~~~~~~"
 				db.commit()
 				db.close()
 	db = pymysql.connect(host='localhost',
@@ -351,6 +351,36 @@ def searchForProblem(newData, oldData, name):
 				params[3] = params[3] + "SEC found an Approval Status Change. "
 				data["Approval Status"] = SFPHelperApprovalStatus(newData['SEC']["Approval Status"], oldData['SEC']["Approval Status"])
 			params[4]["SEC"] = data
+	except KeyError:
+		pass
+	try: 
+		if newData['FCA'] != oldData["FCA"]:
+			data = {}
+			if newData['FCA']['Legal Name'] != oldData['FCA']["Legal Name"]:
+				params[3] = params[3] + "FCA found a Name Change. "
+				data["Legal Name"] = SFPHelperLegalName(newData['FCA']["Legal Name"], oldData['FCA']["Legal Name"])
+			if newData['FCA']["Legal Address"] != oldData['FCA']["Legal Address"]:
+				params[3] = params[3] + "FCA found a Legal Address Change. "
+				data["FCA"] = SFPHelperMailingAddress(newData['FCA']["Legal Address"], oldData['FCA']["Legal Address"])
+			if newData['FCA']["Approval Status"] != oldData['FCA']["Approval Status"]:
+				params[3] = params[3] + "FCA found an Approgval Status Change. "
+				data["FCA"] = SFPHelperBusinessAddress(newData['FCA']["Approval Status"], oldData['FCA']["Approval Status"])
+			params[4]["FCA"] = data
+	except KeyError:
+		pass
+	try: 
+		if newData['Beta'] != oldData["Beta"]:
+			data = {}
+			if newData['Beta']['Legal Name'] != oldData['Beta']["Legal Name"]:
+				params[3] = params[3] + "Beta found a Name Change. "
+				data["Legal Name"] = SFPHelperLegalName(newData['Beta']["Legal Name"], oldData['Beta']["Legal Name"])
+			if newData['Beta']["Legal Address"] != oldData['Beta']["Legal Address"]:
+				params[3] = params[3] + "Beta found a Legal Address Change. "
+				data["Beta"] = SFPHelperMailingAddress(newData['Beta']["Legal Address"], oldData['Beta']["Legal Address"])
+			if newData['Beta']["Approval Status"] != oldData['Beta']["Approval Status"]:
+				params[3] = params[3] + "Beta found an Approgval Status Change. "
+				data["Beta"] = SFPHelperBusinessAddress(newData['Beta']["Approval Status"], oldData['Beta']["Approval Status"])
+			params[4]["Beta"] = data
 	except KeyError:
 		pass
 	params[4] = str(json.dumps(params[4]))
@@ -563,7 +593,7 @@ def changePendingAlert(update):
 	db.close()
 
 
-print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v"
+# print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v"
 
 # removeClient()
 # addClient([2, "Apple Inc", "0000320193", None, None, None, None, None, True])
@@ -571,38 +601,38 @@ print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~v"
 # addClient([4, "BNP PARIBAS SECURITIES CORP.", None, None, "15794", None, None, None, True])
 # addClient([5, "Pacific Investment Management Company LLC", None, None, None, "720355843735711115", None, None, True])
 # addClient([6, "MORGAN STANLEY SMITH BARNEY PRIVATE MANAGEMENT II LLC", None, None, None, None, None, "163747", True])
-
 # printClients()
 # clearLog()
 # printClients()
-# scrapeAll()
+
+scrapeAll() # <~~~~~~ NEEDED TO MAINTAIN SCRAPERS
+
 # scrapeAll()
 # printLog()
 # clearAlertLog()
 # clearPendingAlerts()
 # clearCompletedAlerts()
-
-addToAlertLog((1, 22, 'PUTNAM INVESTMENT MANAGEMENT, LLC', '2018-08-09 20:26:06', 'GMEI found a Legal Address Change. ', '{"GMEI": {"Legal Address": {"New Legal Address": "Six PO Box Square Boston Massachusetts, 02109 United States", "Old Legal Address": "One Post Office Square Boston, Massachusetts, 02109 United States"}}}', 'n/a', 0, 'n/a', 0))
-addToAlertLog((2, 56, 'ABC Client', '2018-08-09 20:26:06', 'SEC found an Approval Status Change. ', '{"SEC": {"Approval Status": {"New Approval Status": "Revoked", "Old Approval Status": "Approved"}}}', 'n/a', 0, 'n/a', 0))
-addToAlertLog((3, 33, 'Sovereign Bank, National Association', '2018-08-09 20:26:06', 'FDIC found a Name Change. ', '{"FDIC": {"Legal Name": {"New Legal Name": "Santander Bank, National Association", "Old Legal Name": "Sovereign Bank, National Association"}}}', 'n/a', 0, 'n/a', 0))
+# addToAlertLog((1, 22, 'PUTNAM INVESTMENT MANAGEMENT, LLC', '2018-08-09 20:26:06', 'GMEI found a Legal Address Change. ', '{"GMEI": {"Legal Address": {"New Legal Address": "Six PO Box Square Boston Massachusetts, 02109 United States", "Old Legal Address": "One Post Office Square Boston, Massachusetts, 02109 United States"}}}', 'n/a', 0, 'n/a', 0))
+# addToAlertLog((2, 56, 'ABC Client', '2018-08-09 20:26:06', 'SEC found an Approval Status Change. ', '{"SEC": {"Approval Status": {"New Approval Status": "Revoked", "Old Approval Status": "Approved"}}}', 'n/a', 0, 'n/a', 0))
+# addToAlertLog((3, 33, 'Sovereign Bank, National Association', '2018-08-09 20:26:06', 'FDIC found a Name Change. ', '{"FDIC": {"Legal Name": {"New Legal Name": "Santander Bank, National Association", "Old Legal Name": "Sovereign Bank, National Association"}}}', 'n/a', 0, 'n/a', 0))
 # addToAlertLog((4, 1, 'Banana Inc', '2018-07-22 20:26:06', 'FDIC found a Name Change. ', '{"FDIC": {"Legal Name": {"New Legal Name": "Pear Co.", "Old Legal Name": "Banana Inc"}}}', 'maddie.ostergaard@exosfinancial.com', 1, 'oren.mor@exosfinancial.com', 1))
 # addToAlertLog((5, 1, 'Banana Inc', '2018-07-22 20:26:06', 'FDIC found a Name Change. ', '{"FDIC": {"Legal Name": {"New Legal Name": "Pear Co.", "Old Legal Name": "Banana Inc"}}}', 'maddie.ostergaard@exosfinancial.com', 1, 'n/a', 0))
-
 # addLog([])
 
-# changes()
+changes() # <~~~~~~ NEEDED TO MAINTAIN SCRAPERS
 
-printPendingAlerts()
-printAlertLog()
-
+# printPendingAlerts()
+# printAlertLog()
 # changePendingAlert(['mads', 1, 'jill', 1, 1])
 # changePendingAlert(['jill', 1, 'mads', 0, 2])
-# updateAlertStatus()
+
+updateAlertStatus() # <~~~~~~ NEEDED TO MAINTAIN SCRAPERS
+
 # printCompletedAlerts()
 # printPendingAlerts()
 # printAlertLog()
 
 
-print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^"
+# print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^"
 
 
