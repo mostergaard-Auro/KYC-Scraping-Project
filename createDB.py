@@ -6,8 +6,8 @@ import json
 db = sqlite3.connect("data/DB.db")
 c = db.cursor()
 
-masterList = "CREATE TABLE IF NOT EXISTS KYC_Client_Master_List(exosID INTEGER, client STRING, EDGAR STRING, FDIC STRING, FINRA STRING, GMEI STRING, NIC STRING, SEC STRING, active BOOLEAN);"
-c.execute(masterList)
+mainList = "CREATE TABLE IF NOT EXISTS KYC_Client_Main_List(exosID INTEGER, client STRING, EDGAR STRING, FDIC STRING, FINRA STRING, GMEI STRING, NIC STRING, SEC STRING, active BOOLEAN);"
+c.execute(mainList)
 
 scraperLog = "CREATE TABLE IF NOT EXISTS Scraper_Log(logID INTEGER, exosID INTEGER, tStamp TIME, data BLOB);"
 
